@@ -489,6 +489,10 @@ function makedeb() {
         deblog "Vcs-Git" "${url}"
     fi
 
+    if [[ ${essential} == "true" ]]; then
+        deblog "Essential" "yes"
+    fi
+
     if [[ -n ${makedepends[*]} ]]; then
         deblog "Build-Depends" "$(sed 's/ /, /g' <<< "${makedepends[@]}")"
     fi
@@ -642,7 +646,13 @@ fi' | sudo tee "$STOWDIR/$name/DEBIAN/$deb_post_file" > /dev/null
 
     if ((PACSTALL_INSTALL != 0)); then
         # --allow-downgrades is to allow git packages to "downgrade", because the commits aren't necessarily a higher number than the last version
-        if ! sudo -E apt-get install --reinstall "$STOWDIR/$name.deb" -y --allow-downgrades 2> /dev/null; then
+        if [[ ${essential} = "true" ]]; then
+            pac_install_cmd="sudo -E dpkg -i $STOWDIR/$name.deb"
+        else
+            pac_install_cmd="sudo -E apt-get install --reinstall $STOWDIR/$name.deb -y --allow-downgrades"
+        fi
+        # below can't be in quotes
+        if ! ${pac_install_cmd} 2> /dev/null; then
             echo -ne "\t"
             fancy_message error "Failed to install $name deb"
             error_log 8 "install $PACKAGE"
