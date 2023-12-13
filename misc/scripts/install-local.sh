@@ -207,7 +207,7 @@ function get_compatible_releases() {
             return 0
         fi
     done
-    if [[ "${is_compat}" == "false" || "${is_compat}" != "true" ]]; then
+    if [[ ${is_compat} == "false" || ${is_compat} != "true" ]]; then
         fancy_message error "This Pacscript does not work on ${BBlue}${distro_name}:${distro_version_name}${NC}/${BBlue}${distro_name}:${distro_version_number}${NC}"
         return 1
     fi
@@ -483,7 +483,7 @@ function makedeb() {
         deblog "Architecture" "all"
     fi
     deblog "Section" "Pacstall"
-    deblog "Priority" "optional"
+    deblog "Priority" "${priority:-optional}"
 
     if [[ $name == *-git ]]; then
         deblog "Vcs-Git" "${url}"
@@ -795,6 +795,15 @@ if ! checks; then
     return 1
 fi
 
+# If priority exists and is required, and also that this package has not been installed before (first time)
+if [[ -n ${priority} && ${priority} == 'required' ]] && ! is_package_installed "${name}"; then
+    ask "This package has 'priority=required', meaning once this is installed, it should be assumed to be uninstallable. Do you want to continue?" Y
+    if ((answer != 0)); then
+        cleanup
+        exit 1
+    fi
+fi
+
 if is_function pkgver; then
     full_version="${epoch+$epoch:}${pkgver}-pacstall${pkgrel:-1}~git$(pkgver)"
 elif [[ ${name} == *-deb ]]; then
@@ -819,7 +828,7 @@ if [[ -n $pacdeps ]]; then
         touch "/tmp/pacstall-pacdeps-$i"
 
         [[ $KEEP ]] && cmd="-KPI" || cmd="-PI"
-        if pacstall -S "${i}@${REPO}" &>/dev/null; then
+        if pacstall -S "${i}@${REPO}" &> /dev/null; then
             repo="@${REPO}"
         fi
         if is_package_installed "${i}"; then
