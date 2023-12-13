@@ -483,14 +483,16 @@ function makedeb() {
         deblog "Architecture" "all"
     fi
     deblog "Section" "Pacstall"
-    deblog "Priority" "${priority:-optional}"
+
+    if [[ ${priority} == "essential" ]]; then
+        deblog "Priority" "required"
+        deblog "Essential" "yes"
+    else
+        deblog "Priority" "${priority:-optional}"
+    fi
 
     if [[ $name == *-git ]]; then
         deblog "Vcs-Git" "${url}"
-    fi
-
-    if [[ ${essential} == "true" ]]; then
-        deblog "Essential" "yes"
     fi
 
     if [[ -n ${makedepends[*]} ]]; then
@@ -646,7 +648,7 @@ fi' | sudo tee "$STOWDIR/$name/DEBIAN/$deb_post_file" > /dev/null
 
     if ((PACSTALL_INSTALL != 0)); then
         # --allow-downgrades is to allow git packages to "downgrade", because the commits aren't necessarily a higher number than the last version
-        if [[ ${essential} = "true" ]]; then
+        if [[ ${priority} == "essential" ]]; then
             pac_install_cmd="sudo -E dpkg -i $STOWDIR/$name.deb"
         else
             pac_install_cmd="sudo -E apt-get install --reinstall $STOWDIR/$name.deb -y --allow-downgrades"
@@ -891,7 +893,7 @@ if ! is_package_installed "${name}"; then
                     cleanup
                     return 1
                 fi
-                if [[ ${essential} == "true" ]]; then
+                if [[ ${priority} == "essential" ]]; then
                     essrmflag="--allow-remove-essential"
                 else
                     essrmflag=""
