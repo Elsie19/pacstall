@@ -888,11 +888,10 @@ if ! is_package_installed "${name}"; then
                     return 1
                 fi
                 if [[ ${priority} == "essential" ]]; then
-                    essrmflag="--allow-remove-essential"
+                    sudo apt-get remove -y "${pkg}" --allow-remove-essential
                 else
-                    essrmflag=""
+                    sudo apt-get remove -y "${pkg}"
                 fi
-                sudo apt-get remove -y "${pkg}" "${essrmflag}"
             fi
         done
     fi
